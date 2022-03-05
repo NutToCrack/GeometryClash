@@ -27,11 +27,13 @@ async function bossPhase() {
             bossElem.setAttribute('src', '1.png');
             bossElem.style.zIndex = 11;
             bossElem.onclick = function() {
+                makeExplosion(80, 100, 500);
                 body.removeChild(bossElem);
             }
             body.appendChild(bossElem);
             return bossElem;
         }(),
+        isBoss: true,
         position: {x: 0, y: 0, a: 0},
         velocity: {y: 0, a: 0.3},
         size: {width: 300, height: 300},
@@ -65,7 +67,20 @@ async function gameOver() {
         gameOverElem.className = 'over';
         body.appendChild(sndBackgound);
         body.appendChild(gameOverElem);
+        makeExplosion(player.position.x, player.position.y, 40);
     }
+}
+
+function makeExplosion(x, y, size) {
+    const exp = document.createElement('img');
+    exp.src = 'shitty_explosion.gif';
+    exp.width = size;
+    exp.height = size;
+    exp.style.top = `${y}px`;
+    exp.style.left = `${x}px`;
+    exp.style.zIndex = 13;
+    body.appendChild(exp);
+    setTimeout(() => body.removeChild(exp), 900);
 }
 
 function reduceAngle(angle) {
@@ -155,7 +170,7 @@ function Bullet(position) {
                     && 
                 go !== this
             ) {
-                go.commitDeath();
+                go.isBoss || go.commitDeath();
                 this.commitDeath();
                 break;
             }
