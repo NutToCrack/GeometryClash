@@ -2,16 +2,31 @@
 <head>
     <script src="game.js" defer></script>
     <style>
-        canvas {
+        canvas, img, div {
             position: absolute;
             left: 0;
             top: 0;
             transform-origin: center;
             transform: rotate(0);
         }
+        div {
+            top: 500px;
+            height: 20px;
+            width: 100px;
+            border: 1px solid black;
+        }
+        div > div {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: greenyellow;
+        }
     </style>
 </head>
 <body>
-    <canvas id="canvas1" width="500" height="500"></canvas>
-    <canvas id="canvas2" width="500" height="500"></canvas>
+    <img id="background" src="4.png" width="500" height="500"></img><br/>
+    <div id="health-bar">
+        <div>
+        </div>
+    </div>
 </body>

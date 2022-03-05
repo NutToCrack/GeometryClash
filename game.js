@@ -3,6 +3,57 @@ const screenSize = {
     height: 500,
 }
 const body = document.querySelector('body');
+const healthBar = {
+    elem: document.querySelector('#health-bar > div'),
+    _health: 100,
+    get health() {
+        return this._health;
+    },
+    set health(val) {
+        if (val <= 0) gameOver();
+        this._health = val;
+        this.elem.style.width = `${Math.floor(val)}px`;
+    }
+}
+let enemies = 20;
+
+async function bossPhase() {
+    console.log('bossSpawns');
+    const boss = Object.assign(Object.create(gameObject), {
+        elem: function() {
+            const bossElem = document.createElement('img');
+            bossElem.setAttribute('width', 300);
+            bossElem.setAttribute('height', 300);
+            bossElem.setAttribute('src', '1.png');
+            body.appendChild(bossElem);
+            return bossElem;
+        }(),
+        position: {x: 0, y: 0, a: 0},
+        velocity: {y: 0, a: 0.3},
+        size: {width: 300, height: 300},
+        collisionRadius: 150,
+        render(deltaTime) {
+            if (
+                Math.pow(player.position.x + player.size.width/2 - this.position.x - this.size.width/2, 2) + Math.pow(player.position.y + player.size.height/2 - this.position.y - this.size.height/2, 2)
+                    <
+                Math.pow(this.collisionRadius + player.collisionRadius, 2)
+            ) gameOver(); 
+            this.draw(deltaTime);
+        }
+    })
+    gameObjects.add(boss);
+}
+
+async function gameOver() {
+    console.log('game ober');
+    const bckg = document.getElementById('background');
+    const gameOverElem = document.createElement('img');
+    gameOverElem.setAttribute('src', '4.png')
+    const sndBackgound = document.createElement('img');
+    sndBackgound.setAttribute('src', '4.png')
+    bckg.appendChild(sndBackgound);
+    bckg.appendChild(gameOverElem);
+}
 
 function reduceAngle(angle) {
     const sgn = Math.sign(angle);
@@ -27,6 +78,10 @@ const gameObject = {
     commitDeath() {
         body.removeChild(this.elem);
         gameObjects.delete(this);
+        this.dead = true;
+        if (this.constuctor === Enemy) {
+            if (--enemies === 0) bossPhase();
+        };
     }
 }
 
@@ -35,17 +90,23 @@ function Enemy() {
     this.velocity = {y: 2, a: 0};
     this.collisionRadius = 18;
     this.size = {width: 40, height: 40};
-    this.elem = document.createElement('canvas');
-    this.elem.setAttribute('width', 40);
+    this.elem = document.createElement('img');
+    this.elem.setAttribute('src', '2.png');
     this.elem.setAttribute('height', 40);
-    this.elem.getContext('2d').strokeRect(0, 0, 40, 40);
-    this.elem.getContext('2d').fillRect(10, 0, 20, 20);
+    this.elem.setAttribute('width', 40);
     body.appendChild(this.elem);
     this.render = function(deltaTime) {
         const dx = player.position.x - this.position.x;
         const dy = this.position.y - player.position.y;
         const angleDiff = Math.atan2(dx, dy) - reduceAngle(this.position.a);
         this.velocity.a = angleDiff > 0 ? 0.06: -0.06;
+        if (
+            Math.pow(player.position.x + player.size.width/2 - this.position.x - this.size.width/2, 2) + Math.pow(player.position.y + player.size.height/2 - this.position.y - this.size.height/2, 2)
+                <
+            Math.pow(this.collisionRadius + player.collisionRadius, 2)
+        ) {
+            healthBar.health -= deltaTime*2; 
+        }
         this.draw(deltaTime);
     }
 }
@@ -57,22 +118,24 @@ function Bullet(position) {
         x: position.x + player.size.width/2,
         y: position.y + player.size.height/2,
     };
+    // console.log(this.position);
     this.velocity = {y: 20, a: 0};
     this.collisionRadius = 4;
-    this.size = {width: 20, height: 20};
-    this.elem = document.createElement('canvas');
-    this.elem.setAttribute('width', 6);
-    this.elem.setAttribute('height', 6);
-    this.elem.getContext('2d').strokeRect(0, 0, 6, 6);
-    this.elem.getContext('2d').fillRect(8, 0, 6, 2);
+    this.size = {width: 16, height: 16};
+    this.elem = document.createElement('img');
+    this.elem.setAttribute('width', 16);
+    this.elem.setAttribute('height', 16);
+    this.elem.setAttribute('src', 'pocisk.png');
     body.appendChild(this.elem);
     this.render = function(deltaTime) {
         this.draw(deltaTime);
         for (go of gameObjects) {
             if (
+                !go.dead
+                    &&
                     Math.pow(go.position.x + go.size.width/2 - this.position.x - this.size.width/2, 2) + Math.pow(go.position.y + go.size.height/2 - this.position.y - this.size.height/2, 2)
                         <
-                    (this.collisionRadius + go.collisionRadius) 
+                    Math.pow(this.collisionRadius + go.collisionRadius, 2)
                     && 
                 go !== player 
                     && 
@@ -80,18 +143,22 @@ function Bullet(position) {
             ) {
                 go.commitDeath();
                 this.commitDeath();
+                break;
             }
         }
+    }
+    if (this.position.x < 21 || this.position.x > (screenSize.width - 21) || this.position.y < 21 || this.position.y > (screenSize.height - 21)) {
+        this.commitDeath();
     }
 }
 Bullet.prototype = gameObject;
 
 const player = Object.assign(Object.create(gameObject), {
     elem: function() {
-        const playerElem = document.createElement('canvas');
+        const playerElem = document.createElement('img');
         playerElem.setAttribute('width', 40);
         playerElem.setAttribute('height', 40);
-        playerElem.getContext('2d').fillRect(0, 0, 40, 40);
+        playerElem.setAttribute('src', '3.png');
         body.appendChild(playerElem);
         return playerElem;
     }(),
