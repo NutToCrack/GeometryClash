@@ -25,6 +25,10 @@ async function bossPhase() {
             bossElem.setAttribute('width', 300);
             bossElem.setAttribute('height', 300);
             bossElem.setAttribute('src', '1.png');
+            bossElem.style.zIndex = 11;
+            bossElem.onclick = function() {
+                body.removeChild(bossElem);
+            }
             body.appendChild(bossElem);
             return bossElem;
         }(),
@@ -44,15 +48,24 @@ async function bossPhase() {
     gameObjects.add(boss);
 }
 
+let gameIsOver = false;
 async function gameOver() {
-    console.log('game ober');
-    const bckg = document.getElementById('background');
-    const gameOverElem = document.createElement('img');
-    gameOverElem.setAttribute('src', '4.png')
-    const sndBackgound = document.createElement('img');
-    sndBackgound.setAttribute('src', '4.png')
-    bckg.appendChild(sndBackgound);
-    bckg.appendChild(gameOverElem);
+    if (!gameIsOver) {
+        gameIsOver = true;
+        console.log('game ober');
+        const gameOverElem = document.createElement('img');
+        gameOverElem.setAttribute('src', '4.png');
+        gameOverElem.setAttribute('width', '500');
+        gameOverElem.setAttribute('height', '500');
+        const sndBackgound = document.createElement('img');
+        sndBackgound.setAttribute('src', 'funkygameover.png');
+        sndBackgound.setAttribute('width', '500');
+        sndBackgound.setAttribute('height', '60');
+        sndBackgound.className = 'overtext';
+        gameOverElem.className = 'over';
+        body.appendChild(sndBackgound);
+        body.appendChild(gameOverElem);
+    }
 }
 
 function reduceAngle(angle) {
@@ -79,13 +92,14 @@ const gameObject = {
         body.removeChild(this.elem);
         gameObjects.delete(this);
         this.dead = true;
-        if (this.constuctor === Enemy) {
+        if (this.isEnemy) {
             if (--enemies === 0) bossPhase();
         };
     }
 }
 
 function Enemy() {
+    this.isEnemy = true;
     this.position = {x: Math.random()*300, y: Math.random()*300, a: 0};
     this.velocity = {y: 2, a: 0};
     this.collisionRadius = 18;
